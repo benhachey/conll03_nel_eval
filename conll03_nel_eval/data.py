@@ -346,18 +346,20 @@ class Reader(Dialected):
                             raise e
                         if iob is None or iob == 'O':
                             if m is not None:
+                                # leaving mention
                                 sentence.append(m)
                                 m = None
                             sentence.append(Token(j, j+1, token))
-                        elif iob == 'B':
+                        elif iob == 'I' and m is not None and m.link == link:
+                            # mid-mention
+                            m.texts.append(token)
+                            m.end += 1
+                        elif iob in 'IB':
+                            # transitioning from O or I to B, or from O to I -> begin mention
                             if m is not None:
                                 sentence.append(m)
                                 m = None
                             m = Mention(j, j+1, name, [token], link=link, score=score)
-                        elif iob == 'I':
-                            assert m is not None
-                            m.texts.append(token)
-                            m.end += 1
                         else:
                             assert False, 'Unexpected IOB case "{}"'.format(iob)
                         i, l = lines.next()
